@@ -1,21 +1,7 @@
-import { TokenFarm } from "../typechain-types/TokenFarm"
+import { TokenFarm } from "../front_end/src/lib/typechain-types"
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-
-export interface AllowedTokens {
-	daiToken: {
-		token: string
-		pricefeed: string
-	}
-	ndtToken: {
-		token: string
-		pricefeed: string
-	}
-	wethToken: {
-		token: string
-		pricefeed: string
-	}
-}
+import { AllowedTokens } from "./types"
 
 export const addAllowedTokens = async (
 	mainContract: TokenFarm,
@@ -25,7 +11,7 @@ export const addAllowedTokens = async (
 	const useContractWithAccount = mainContract.connect(account)
 	for (const key of Object.keys(allowedTokensList)) {
 		const payload = allowedTokensList[key as keyof AllowedTokens]
-		await useContractWithAccount.addAllowedToken(payload.token)
+		if (payload) await useContractWithAccount.addAllowedToken(payload.token)
 	}
 }
 export const setPriceFeedContract = async (
@@ -36,6 +22,6 @@ export const setPriceFeedContract = async (
 	const useContractWithAccount = mainContract.connect(account)
 	for (const key of Object.keys(allowedTokensList)) {
 		const payload = allowedTokensList[key as keyof AllowedTokens]
-		await useContractWithAccount.setPriceFeedContract(payload.token, payload.pricefeed)
+		if (payload) await useContractWithAccount.setPriceFeedContract(payload.token, payload.pricefeed)
 	}
 }

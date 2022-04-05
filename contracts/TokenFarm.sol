@@ -4,16 +4,19 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 error noTokenStaked();
 error notEnoughAmount();
 error tokenNotAllowed();
 error emptyStakingBalance();
 
+/// @custom:security-contact dinhthinh.ng@gmail.com
 contract TokenFarm is Ownable {
 	// map token adress => staker adress => amount
 	mapping(address => mapping(address => uint256)) public stakingBalance;
+	// map token address => total amount
+	mapping(address => uint256) public poolTotalStaked;
 	mapping(address => uint256) public uniqueTokenStaked;
 	mapping(address => address) public tokenPriceFeedMapping;
 	address[] public allowedTokens;
@@ -75,6 +78,7 @@ contract TokenFarm is Ownable {
 		updateUniqueTokenStaked(msg.sender, _token);
 		// Add total amount user have staked this token
 		stakingBalance[_token][msg.sender] += _amount;
+		poolTotalStaked[_token] += _amount;
 		// User's first time staking, add to stakers array
 		if (uniqueTokenStaked[msg.sender] == 1) {
 			stakers.push(msg.sender);
@@ -86,6 +90,7 @@ contract TokenFarm is Ownable {
 		if (balance <= 0) revert emptyStakingBalance();
 		// reset balance
 		stakingBalance[_token][msg.sender] = 0;
+		poolTotalStaked[_token] -= balance;
 		// decrease number of unique token staked
 		uniqueTokenStaked[msg.sender] = uniqueTokenStaked[msg.sender] - 1;
 		// remove staker

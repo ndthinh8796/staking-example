@@ -3,17 +3,18 @@ import { ethers, network } from "hardhat"
 import BN from "bn.js"
 import ChaiBN from "chai-bn"
 
-import { NDTToken__factory } from "../../typechain-types/factories/NDTToken__factory"
-import { TokenFarm__factory } from "../../typechain-types/factories/TokenFarm__factory"
-import { MockDai__factory } from "../../typechain-types/factories/MockDai__factory"
-import { MockWeth__factory } from "../../typechain-types/factories/MockWeth__factory"
-import { MockV3Aggregator__factory } from "../../typechain-types/factories/MockV3Aggregator__factory"
-
-import { MockV3Aggregator } from "../../typechain-types/MockV3Aggregator"
-import { MockDai } from "../../typechain-types/MockDai"
-import { MockWeth } from "../../typechain-types/MockWeth"
-import { NDTToken } from "../../typechain-types/NDTToken"
-import { TokenFarm } from "../../typechain-types/TokenFarm"
+import {
+	NDTToken__factory,
+	TokenFarm__factory,
+	MockDai__factory,
+	MockWeth__factory,
+	MockV3Aggregator__factory,
+	MockV3Aggregator,
+	MockWeth,
+	MockDai,
+	NDTToken,
+	TokenFarm,
+} from "../../front_end/src/lib/typechain-types"
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import {
@@ -22,7 +23,8 @@ import {
 	DECIMALS,
 	KEPT_BALANCE,
 } from "../../utils/helperHardhat.config"
-import { addAllowedTokens, setPriceFeedContract, AllowedTokens } from "../../utils/helpfulScripts"
+import { addAllowedTokens, setPriceFeedContract } from "../../utils/helpfulScripts"
+import { AllowedTokens } from "../../utils/types"
 
 // Enable and inject BN dependency
 use(ChaiBN(BN))
@@ -53,12 +55,10 @@ let addr2: SignerWithAddress
 
 let allowedTokens: AllowedTokens
 
-const stakeToken = async (account = owner) => {
-	if (account.address !== owner.address) {
-		await ndtTokenContract.transfer(account.address, amount_staked)
-	}
-	await ndtTokenContract.connect(account).approve(tokenFarmContract.address, amount_staked)
-	await tokenFarmContract.connect(account).stakeTokens(amount_staked, ndtTokenContract.address)
+const stakeToken = async (account = owner, tokenContract: any = ndtTokenContract) => {
+	await tokenContract.transfer(account.address, amount_staked)
+	await tokenContract.connect(account).approve(tokenFarmContract.address, amount_staked)
+	await tokenFarmContract.connect(account).stakeTokens(amount_staked, tokenContract.address)
 }
 
 !developmentChains.includes(network.name)
@@ -127,9 +127,10 @@ const stakeToken = async (account = owner) => {
 
 				for (const key of Object.keys(allowedTokens)) {
 					const payload = allowedTokens[key as keyof AllowedTokens]
-					expect(await tokenFarmContract.tokenPriceFeedMapping(payload.token)).to.equal(
-						payload.pricefeed
-					)
+					if (payload)
+						expect(await tokenFarmContract.tokenPriceFeedMapping(payload.token)).to.equal(
+							payload.pricefeed
+						)
 				}
 			})
 
@@ -165,14 +166,23 @@ const stakeToken = async (account = owner) => {
 			it("success - user can stake token that is allowed", async () => {
 				await addAllowedTokens(tokenFarmContract, allowedTokens, owner)
 				await stakeToken()
+				await stakeToken(addr1, mockDaiContract)
+				await stakeToken(addr1)
 
 				expect(
 					await tokenFarmContract.stakingBalance(ndtTokenContract.address, owner.address)
 				).to.equal(amount_staked)
 
+				expect(
+					await tokenFarmContract.stakingBalance(mockDaiContract.address, addr1.address)
+				).to.equal(amount_staked)
+
 				expect(await tokenFarmContract.uniqueTokenStaked(owner.address)).to.equal(1)
 
 				expect(await tokenFarmContract.stakers(0)).to.equal(owner.address)
+				expect(await tokenFarmContract.poolTotalStaked(ndtTokenContract.address)).to.equal(
+					amount_staked.add(amount_staked)
+				)
 			})
 
 			it("reverted - user can't stake token that is NOT allowed", async () => {
@@ -197,6 +207,7 @@ const stakeToken = async (account = owner) => {
 			it("success - user unstake token", async () => {
 				await addAllowedTokens(tokenFarmContract, allowedTokens, owner)
 				await stakeToken()
+				await stakeToken(addr1)
 
 				const startingBalance = await ndtTokenContract.balanceOf(owner.address)
 
@@ -206,9 +217,13 @@ const stakeToken = async (account = owner) => {
 					await tokenFarmContract.stakingBalance(ndtTokenContract.address, owner.address)
 				).to.equal(0)
 
+				expect(await tokenFarmContract.poolTotalStaked(ndtTokenContract.address)).to.equal(
+					amount_staked
+				)
+
 				expect(await tokenFarmContract.uniqueTokenStaked(owner.address)).to.equal(0)
 
-				await expect(tokenFarmContract.stakers(0)).to.be.reverted
+				expect(await tokenFarmContract.stakers(0)).to.equal(addr1.address)
 
 				expect(await ndtTokenContract.balanceOf(owner.address)).to.equal(
 					startingBalance.add(amount_staked)

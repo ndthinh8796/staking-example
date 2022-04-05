@@ -37,7 +37,7 @@ const config: HardhatUserConfig = {
 		harmony_testnet: {
 			url: `https://api.s0.b.hmny.io`,
 			chainId: 1666700000,
-			accounts: [`0x${process.env.HARMONY_PRIVATE_KEY}`],
+			accounts: [`0x${process.env.PRIVATE_KEY}`],
 		},
 		ropsten: {
 			url: process.env.ROPSTEN_URL || "",
@@ -61,6 +61,9 @@ const config: HardhatUserConfig = {
 	},
 	mocha: {
 		timeout: 3000000,
+	},
+	typechain: {
+		outDir: "./front_end/src/lib/typechain-types",
 	},
 }
 
