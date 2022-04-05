@@ -1,46 +1,87 @@
-# Advanced Sample Hardhat Project
+# Staking Example DApp
 
-This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
+A simple staking contract connected to a Nextjs Front end.
 
-The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
+## Features
 
-Try running some of the following tasks:
+- User can connect Metamask wallet to stake and withdraw
+- Owner can issue reward to staked users
+- Issue and reward your own token
+- Supported tokens: Wone, Weth, Dai
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-npx hardhat run scripts/deploy.ts
-TS_NODE_FILES=true npx ts-node scripts/deploy.ts
-npx eslint '**/*.{js,ts}'
-npx eslint '**/*.{js,ts}' --fix
-npx prettier '**/*.{json,sol,md}' --check
-npx prettier '**/*.{json,sol,md}' --write
-npx solhint 'contracts/**/*.sol'
-npx solhint 'contracts/**/*.sol' --fix
+## Tech
+
+- [Hardhat](https://hardhat.org/) - Ethereum development environment
+- [NextJS](https://nextjs.org/) - The React Framework
+  for Production!
+- [TailwindCSS](https://tailwindcss.com/) - A utility-first CSS framework
+
+## Configuration
+
+These following steps is for deploying and using contract on Harmony testnet. You can change to any network you like by changing the config.
+
+### Step 1. Set up environment variables
+
+Copy the .env.example file in this directory to .env (which will be ignored by Git):
+
+```
+cp .env.example .env
 ```
 
-# Etherscan verification
+Then set each variable on .env.local:
 
-To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
+- PRIVATE_KEY should be the [private key of your Metamask wallet.](https://metamask.zendesk.com/hc/en-us/articles/360015289632-How-to-Export-an-Account-Private-Key)
 
-In this project, copy the .env.example file to a file named .env, and then edit it to fill in the details. Enter your Etherscan API key, your Ropsten node URL (eg from Alchemy), and the private key of the account which will send the deployment transaction. With a valid .env file in place, first deploy your contract:
+Your .env file should look like this:
 
-```shell
-hardhat run --network ropsten scripts/deploy.ts
+```
+PRIVATE_KEY=...
 ```
 
-Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_ADDRESS` in this command:
+### Step 2. Install dependencies
 
 ```shell
-npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
+npm install
+
+# or
+
+yarn
 ```
 
-# Performance optimizations
+### Step 3. Deploy your own contract
 
-For faster runs of your tests and scripts, consider skipping ts-node's type checking by setting the environment variable `TS_NODE_TRANSPILE_ONLY` to `1` in hardhat's environment. For more details see [the documentation](https://hardhat.org/guides/typescript.html#performance-optimizations).
+```shell
+npx hardhat run scripts/deployToHarmony.ts --network harmony_testnet
+
+# or
+
+hh run scripts/deployToHarmony.ts --network harmony_testnet
+```
+
+Your contract should be deployed to Harmony Testnet. The staking contract and token contract address should be printed on terminal.
+
+```shell
+NDTToken deployed to: ...
+TokenFarm deployed to: ...
+```
+
+You can check the address on https://explorer.pops.one/
+
+### Step 4. Copy contract abi to front end
+
+```shell
+cp -R artifacts front_end/src/lib/
+```
+
+### Step 4. Run Next.js in development mode
+
+```shell
+cd front_end && npm install && npm run dev
+
+# or
+
+cd front_end && yarn && yarn dev
+
+```
+
+Your DApp should be up and running on http://localhost:3000!
